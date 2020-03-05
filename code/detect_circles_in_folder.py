@@ -1,3 +1,7 @@
+# current issues
+# - if it fails to find a circle, it breaks
+# - detects compass rose; fails to detect larger circles
+
 # import the necessary packages
 import numpy as np
 import argparse
@@ -12,7 +16,7 @@ import cv2
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/CoalGasification/SANBORNMAPDOWNLOADS/detect_coal_gas-master-test/input/*.jpeg"))
+imgnames = sorted(glob.glob("/Users/jtollefs/Documents/GitHub/detect_coal_gas/input/*.jpeg"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
