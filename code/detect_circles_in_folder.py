@@ -1,7 +1,3 @@
-# current issues
-# - if it fails to find a circle, it breaks
-# - detects compass rose; fails to detect larger circles
-
 # import the necessary packages
 import numpy as np
 import argparse
@@ -9,6 +5,8 @@ import glob
 import os,sys
 import cv2
 
+def change_to_output(path):
+    return os.path.join(os.path.split(os.path.dirname(path))[0], 'output', os.path.basename(path))
 
 # construct the argument parser and parse the arguments
 #ap = argparse.ArgumentParser()
@@ -16,7 +14,7 @@ import cv2
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/GitHub/detect_coal_gas/input/*.jpeg"))
+imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/CoalGasification/SANBORNMAPDOWNLOADS/detect_coal_gas-master-test/input/*.jpeg"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
@@ -31,14 +29,17 @@ for imgname in imgnames:
 # detect circles in the image
 #circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150)#, #maxRadius = 200)
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=50,minRadius=20,maxRadius=60)
-    circles = np.uint16(np.around(circles))
-    for i in circles[0,:]:
-        # draw the outer circle
-        cv2.circle(output,(i[0],i[1]),i[2],(0
-        ,255,0),2)
-        # draw the center of the circle
-        cv2.circle(output,(i[0],i[1]),2,(0,0,255),3)
+                                param1=20,param2=50,minRadius=60,maxRadius=100)
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")
 
-    imgname3 = "_out".join(os.path.splitext(imgname))
-    cv2.imwrite(imgname3, output)
+        for (x, y, r) in circles:
+            # draw the outer circle
+            cv2.circle(output,(x, y), r, (0, 255, 0), 2)
+            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
+            # draw the center of the circle
+            cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
+
+        imgname3 = "_out".join(os.path.splitext(imgname))
+        imgname3 = change_to_output(imgname3)
+        cv2.imwrite(imgname3, output)
