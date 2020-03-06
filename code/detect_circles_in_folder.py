@@ -24,7 +24,8 @@ for imgname in imgnames:
     blur = cv2.GaussianBlur(image,(3,3),0)
     gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
     imgname2 = "_gray".join(os.path.splitext(imgname))
-    cv2.imwrite(imgname2, gray)
+
+#    [removed] cv2.imwrite(imgname2, gray)
 
 # detect circles in the image
 #circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150)#, #maxRadius = 200)
