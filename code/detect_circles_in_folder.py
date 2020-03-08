@@ -14,7 +14,7 @@ def change_to_output(path):
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/CoalGasification/SANBORNMAPDOWNLOADS/detect_coal_gas-master-test/input/*.jpeg"))
+imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpeg"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
@@ -23,12 +23,14 @@ for imgname in imgnames:
     output = image.copy()
     blur = cv2.GaussianBlur(image,(3,3),0)
     gray = cv2.cvtColor(blur, cv2.COLOR_BGR2GRAY)
-    imgname2 = "_gray".join(os.path.splitext(imgname))
 
-#    [removed] cv2.imwrite(imgname2, gray)
+#   imgname2 = "_gray".join(os.path.splitext(imgname))  [[removed]]
+#   cv2.imwrite(imgname2, gray)  [[removed]]
 
 # detect circles in the image
 #circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150)#, #maxRadius = 200)
+# 50 = min distance between centers of HoughCircles
+# too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
                                 param1=20,param2=50,minRadius=60,maxRadius=100)
     if circles is not None:
@@ -41,6 +43,7 @@ for imgname in imgnames:
             # draw the center of the circle
             cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
+# for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
         imgname3 = "_out".join(os.path.splitext(imgname))
         imgname3 = change_to_output(imgname3)
         cv2.imwrite(imgname3, output)
