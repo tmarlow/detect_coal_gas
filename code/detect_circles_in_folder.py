@@ -14,7 +14,7 @@ def change_to_output(path):
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpeg"))
+imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.tiff"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
@@ -39,6 +39,7 @@ for imgname in imgnames:
         for (x, y, r) in circles:
             # draw the outer circle
             cv2.circle(output,(x, y), r, (0, 255, 0), 2)
+            # draw the radius
             cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
             # draw the center of the circle
             cv2.circle(output,(x, y), 2, (0, 0, 255), 3)

@@ -31,16 +31,18 @@ for imgname in imgnames:
 #circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 50)#, #maxRadius = 200)
 # 50 = min distance between centers of HoughCircles
 # too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
+# compass is between 87 and 90px
 
 # ITERATION 1
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=50,minRadius=45,maxRadius=99)
+                                param1=20,param2=50,minRadius=45,maxRadius=86)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
         for (x, y, r) in circles:
             # draw the outer circle
             cv2.circle(output,(x, y), r, (0, 255, 0), 2)
+            # draw the radius
             cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
             # draw the center of the circle
             cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
@@ -53,7 +55,7 @@ for imgname in imgnames:
 
 # ITERATION 2
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=100,minRadius=100,maxRadius=149)
+                                param1=20,param2=100,minRadius=91,maxRadius=149)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
