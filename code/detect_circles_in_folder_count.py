@@ -33,13 +33,12 @@ for imgname in imgnames:
 # too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
                                 param1=20,param2=50,minRadius=20,maxRadius=60)
+    no_of_circles = 0
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
-# define number of circles
         no_of_circles = len(circles)
-# define bottom threshold for how many circles to find
-        if (no_of_circles>1):
 
+        if (no_of_circles>1):
             for (x, y, r) in circles:
                 # draw the outer circle
                 cv2.circle(output,(x, y), r, (0, 255, 0), 2)
