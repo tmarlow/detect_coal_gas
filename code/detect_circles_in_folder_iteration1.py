@@ -1,8 +1,6 @@
-# this version runs through images in a folder using a single pass
-# this is useful for full-color Sanborn map scans
-    # Full-color scans include filled circles (not outlines) which are easier for hough_circles to ID
-    # thus, we can use a higher param2 threshold, which returns fewer false positives
-    # b+w images include a compass circle, which requires an "if no_of_circles >1" statement. This version doesn't need that.
+# this version runs through a folder in multiple passes, using multiple ranges of circle radii
+# it's an attempt to avoid all the false positives that seem to come out of a wide range of circle radii (low min and high max) in the hough.circles radius parameters
+# this version also includes one iteration that only returns images with a circle count greater than 1 (that range of radii should include compass rose radius)
 
 # import the necessary packages
 import numpy as np
@@ -19,7 +17,7 @@ def change_to_output(path):
 #ap.add_argument("-i", "--image", required = True, help = "Path to the image")
 #args = vars(ap.parse_args())
 
-## Get all the png image in the PATH_TO_IMAGES
+## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
 imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpg"))
 
 # load the image, clone it for output, and then convert it to grayscale
@@ -34,24 +32,26 @@ for imgname in imgnames:
 #   cv2.imwrite(imgname2, gray)  [[removed]]
 
 # detect circles in the image
-#circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150)#, #maxRadius = 200)
+#circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 50)#, #maxRadius = 200)
 # 50 = min distance between centers of HoughCircles
-# too wide range of radi returns false positives; try iterations of min50max100; min101max150; etc
-# param2: lower = more false pos. color maps: 80 is good. b+w: 50.
+# too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
+# compass is between 87 and 90px
+
+# ITERATION 1 (for range smalller than compass circle)
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=80,minRadius=40,maxRadius=99)
+                                param1=20,param2=50,minRadius=30,maxRadius=60)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
         for (x, y, r) in circles:
-            # draw the outer circle (change last # for thickness)
-            cv2.circle(output,(x, y), r, (0, 255, 0), 5)
+            # draw the outer circle
+            cv2.circle(output,(x, y), r, (0, 255, 0), 2)
             # draw the radius
             cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
             # draw the center of the circle
             cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
-    # for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
+# for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
         imgname1 = "_out1".join(os.path.splitext(imgname))
         imgname1 = change_to_output(imgname1)
         cv2.imwrite(imgname1, output)
