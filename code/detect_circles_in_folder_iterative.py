@@ -1,3 +1,7 @@
+# this version runs through a folder in multiple passes, using multiple ranges of circle radii
+# it's an attempt to avoid all the false positives that seem to come out of a wide range of circle radii (low min and high max) in the hough.circles radius parameters
+# this version also includes one iteration that only returns images with a circle count greater than 1 (that range of radii should include compass rose radius)
+
 # import the necessary packages
 import numpy as np
 import argparse
@@ -14,7 +18,7 @@ def change_to_output(path):
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/SANBORNMAPDOWNLOADS/detect_coal_gas-master-test/input/*.jpeg"))
+imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpg"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
@@ -33,9 +37,9 @@ for imgname in imgnames:
 # too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
 # compass is between 87 and 90px
 
-# ITERATION 1
+# ITERATION 1 (for range smalller than compass circle)
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=50,minRadius=45,maxRadius=86)
+                                param1=20,param2=50,minRadius=30,maxRadius=60)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
@@ -53,27 +57,32 @@ for imgname in imgnames:
         cv2.imwrite(imgname1, output)
 
 
-# ITERATION 2
+# ITERATION 2 (**for range that includes compass circle)
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=100,minRadius=91,maxRadius=149)
+                                param1=20,param2=100,minRadius=61,maxRadius=120)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
-        for (x, y, r) in circles:
-            # draw the outer circle
-            cv2.circle(output,(x, y), r, (0, 255, 0), 2)
-            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
-            # draw the center of the circle
-            cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
+# define number of circles
+        no_of_circles = len(circles)
+# define bottom threshold for how many circles to find
+        if (no_of_circles>1):
 
-# for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
-        imgname2 = "_out2".join(os.path.splitext(imgname))
-        imgname2 = change_to_output(imgname2)
-        cv2.imwrite(imgname2, output)
+            for (x, y, r) in circles:
+                # draw the outer circle
+                cv2.circle(output,(x, y), r, (0, 255, 0), 2)
+                # draw the radius
+                cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
+                # draw the center of the circle
+                cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
-# ITERATION 3
+            imgname2 = "_out2".join(os.path.splitext(imgname))
+            imgname2 = change_to_output(imgname2)
+            cv2.imwrite(imgname2, output)
+
+# ITERATION 3 (**for range larger than compass circle)
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=50,minRadius=150,maxRadius=200)
+                                param1=20,param2=50,minRadius=121,maxRadius=220)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
