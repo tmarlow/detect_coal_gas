@@ -39,7 +39,7 @@ for imgname in imgnames:
 # too wide range of radi returns false positives; try iterations of min50max100; min101max150; etc
 # param2: lower = more false pos. color maps: 80 is good. b+w: 50.
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=80,minRadius=40,maxRadius=99)
+                                param1=20,param2=30,minRadius=91,maxRadius=120)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 

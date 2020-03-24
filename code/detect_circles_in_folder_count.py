@@ -1,6 +1,4 @@
-# this version runs through a folder in multiple passes, using multiple ranges of circle radii
-# it's an attempt to avoid all the false positives that seem to come out of a wide range of circle radii (low min and high max) in the hough.circles radius parameters
-# this version also includes one iteration that only returns images with a circle count greater than 1 (that range of radii should include compass rose radius)
+# this version runs through images in a folder, and only returns images with a circle count higher than 1
 
 # import the necessary packages
 import numpy as np
@@ -17,7 +15,7 @@ def change_to_output(path):
 #ap.add_argument("-i", "--image", required = True, help = "Path to the image")
 #args = vars(ap.parse_args())
 
-## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
+## Get all the png image in the PATH_TO_IMAGES
 imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpg"))
 
 # load the image, clone it for output, and then convert it to grayscale
@@ -32,14 +30,12 @@ for imgname in imgnames:
 #   cv2.imwrite(imgname2, gray)  [[removed]]
 
 # detect circles in the image
-#circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 50)#, #maxRadius = 200)
+#circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 150)#, #maxRadius = 200)
 # 50 = min distance between centers of HoughCircles
 # too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
-# compass is between 87 and 90px
+    circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,200,
+                                param1=40,param2=60,minRadius=30,maxRadius=240)
 
-# ITERATION 2 (**for range that includes compass circle)
-    circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=100,minRadius=61,maxRadius=120)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
@@ -56,6 +52,8 @@ for imgname in imgnames:
                 # draw the center of the circle
                 cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
-            imgname2 = "_out2".join(os.path.splitext(imgname))
-            imgname2 = change_to_output(imgname2)
-            cv2.imwrite(imgname2, output)
+
+# for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
+            imgname3 = "_out".join(os.path.splitext(imgname))
+            imgname3 = change_to_output(imgname3)
+            cv2.imwrite(imgname3, output)

@@ -1,6 +1,6 @@
+# parameters set for color Sanborn scans
 # this version runs through a folder in multiple passes, using multiple ranges of circle radii
 # it's an attempt to avoid all the false positives that seem to come out of a wide range of circle radii (low min and high max) in the hough.circles radius parameters
-# this version also includes one iteration that only returns images with a circle count greater than 1 (that range of radii should include compass rose radius)
 
 # import the necessary packages
 import numpy as np
@@ -37,9 +37,9 @@ for imgname in imgnames:
 # too wide a radius returns false positives; try iterations of min50max100; min101max150; etc
 # compass is between 87 and 90px
 
-# ITERATION 1 (for range smalller than compass circle)
+# ITERATION 1
     circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
-                                param1=20,param2=50,minRadius=30,maxRadius=60)
+                                param1=20,param2=80,minRadius=20,maxRadius=60)
     if circles is not None:
         circles = np.round(circles[0, :]).astype("int")
 
@@ -53,5 +53,25 @@ for imgname in imgnames:
 
 # for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
         imgname1 = "_out1".join(os.path.splitext(imgname))
+        imgname1 = change_to_output(imgname1)
+        cv2.imwrite(imgname1, output)
+
+
+# ITERATION 2
+    circles = cv2.HoughCircles(gray,cv2.HOUGH_GRADIENT,1,50,
+                                param1=20,param2=80,minRadius=61,maxRadius=130)
+    if circles is not None:
+        circles = np.round(circles[0, :]).astype("int")
+
+        for (x, y, r) in circles:
+            # draw the outer circle
+            cv2.circle(output,(x, y), r, (0, 255, 0), 2)
+            # draw the radius
+            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
+            # draw the center of the circle
+            cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
+
+# for successive iterations with different radii, change "_out" to "_out2", "_out3", etc
+        imgname1 = "_out2".join(os.path.splitext(imgname))
         imgname1 = change_to_output(imgname1)
         cv2.imwrite(imgname1, output)
