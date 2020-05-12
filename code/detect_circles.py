@@ -3,7 +3,7 @@ import numpy as np
 import argparse
 import cv2
 
- 
+
 # construct the argument parser and parse the arguments
 #ap = argparse.ArgumentParser()
 #ap.add_argument("-i", "--image", required = True, help = "Path to the image")
@@ -33,5 +33,5 @@ for i in circles[0,:]:
     # draw the center of the circle
     cv2.circle(output,(i[0],i[1]),2,(0,0,255),3)
 
-                                                                       
+
 cv2.imwrite("output.png", output)
