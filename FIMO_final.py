@@ -54,7 +54,7 @@ draw_stroke = 8
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
-imgnames = sorted(glob.glob("../input/*.jpg"))
+imgnames = sorted(glob.glob("input/*.jpg"))
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python

@@ -1,7 +1,8 @@
 # This version runs through a images in multiple passes, using different radii bins in each pass.
-# To be used on Sanborn Digital Edition maps sized roughly 2970 × 3388px (10 megapx) (generated from pdf files using PDF2IMG with "300" as quality setting)
-
+# to be used on sanborn digital edition  maps, sized roughly 2008x1390px (10megapx), generated from pdf files using pdf2img with 150 as quality setting
 # radius including compass tested to ensure it captures (nearly) every compass circle
+# note: this version returns CircleC as if it were the smallest circle
+
 
 # import the necessary packages
 import numpy as np
@@ -17,11 +18,11 @@ def change_to_output(path):
 
 # for circles including compass rose
 ## Radii
-rmin_c = 28
+rmin_c = 20
 rmax_c = 37
 # params
 p1_c = 20
-p2_c = 25
+p2_c = 38
 # blur
 b1_c = 3
 b2_c = 3
@@ -62,7 +63,7 @@ rmin_l4 = 211
 rmax_l4 = 241
 ## Params
 p1_l = 20
-p2_l = 44
+p2_l = 40
 ## blur
 b1_l = 31
 b2_l = 31
@@ -77,17 +78,45 @@ draw_stroke = 15
 #args = vars(ap.parse_args())
 
 ## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
-imgnames = sorted(glob.glob("/Users/jtollefs/Documents/SOCBROWNPHD/FMGP/detect_coal_gas/input/*.jpg"))
+imgnames = sorted(glob.glob("input/*.jpg"))
+
+
 
 # load the image, clone it for output, and then convert it to grayscale
 # load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
 for imgname in imgnames:
     image = cv2.imread(imgname)
-    output = image.copy()
-    blurC = cv2.GaussianBlur(image,(b1_c,b2_c),0)
-    blurS = cv2.GaussianBlur(image,(b1_s,b2_s),0)
-    blurM = cv2.GaussianBlur(image,(b1_m,b2_m),0)
-    blurL = cv2.GaussianBlur(image,(b1_l,b2_l),0)
+    copy = image.copy()
+
+
+######## resize to fit params ###################################################
+
+    height, width = copy.shape[:2]
+    target_height = 2008
+    target_width = 1390
+
+    # enlarge image by factor
+    if (target_height * target_width) < (height * width):
+        # get scaling factor
+        scaling_factor = (target_height + target_width) / (float(height) + float(width))
+
+        # resize image
+        output = cv2.resize(copy, None, fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_AREA)
+
+    # enlarge image by a calculated factor so it's the same resolution as the target
+    if (target_height * target_width) > (height * width):
+        # get scaling factor
+        scaling_factor = (target_height + target_width) / (float(height) + float(width))
+
+        # resize image
+        output = cv2.resize(copy, None, fx=scaling_factor, fy=scaling_factor, interpolation=cv2.INTER_LINEAR)
+
+########## end of resize to fit params ########################################
+
+    blurC = cv2.GaussianBlur(output,(b1_c,b2_c),0)
+    blurS = cv2.GaussianBlur(output,(b1_s,b2_s),0)
+    blurM = cv2.GaussianBlur(output,(b1_m,b2_m),0)
+    blurL = cv2.GaussianBlur(output,(b1_l,b2_l),0)
     grayC = cv2.cvtColor(blurC, cv2.COLOR_BGR2GRAY)
     grayS = cv2.cvtColor(blurS, cv2.COLOR_BGR2GRAY)
     grayM = cv2.cvtColor(blurM, cv2.COLOR_BGR2GRAY)
@@ -240,7 +269,7 @@ for imgname in imgnames:
     total_noncompass_circles = no_of_circles1 + no_of_circles2 + no_of_circles3 + no_of_circles3a + no_of_circles4 + no_of_circles5 + no_of_circles6
 
 # if there is a noncompass circle, or if there are two circles of compass size
-    if (total_noncompass_circles>0) or (no_of_circlesC>1):
+    if (total_noncompass_circles>0) or (no_of_circlesC>0):
         imgname1 = "_out".join(os.path.splitext(imgname))
         imgname1 = change_to_output(imgname1)
         cv2.imwrite(imgname1, output)
