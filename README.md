@@ -13,7 +13,9 @@ A large proportion of positive results means you should run the "compasses" vers
 To do so, change the "compass" variable from 0 to 1.
 
 **FIMO**: For use with maps downloaded from FIMO database
+
 **LOC**: For use with maps downloaded from Library of Congress API
+
 **BW**: For use with black and white maps downloaded from ProQuest Sanborn Digital database.
 
 **files_to_dataframe**: Take a list of images in folders and converts to dataframe. Analyze for compasses as you would using compass_selector
