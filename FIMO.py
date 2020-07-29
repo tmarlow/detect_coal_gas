@@ -1,10 +1,9 @@
-# runs through color maps in 2 iterations (to avoid finding false pos circles of r=0, at (x,y) (0,0))
-# used on images sized 1400*2008 (2.8 megapx), downloaded from Sanborn indices
-# see resize function below - this script resizes images to fit the target resolution listed above
-# this is .28 of the BW-sized maps. Multiply BW map radii bins by .28 to get the bins used here
-# note that some maps include compass rose as a circle; some do not. Adjust iterations accordingly.
+#### FOLDER STRUCTURE###
+# level 1: input folder, this script, output folder
+# input folder: this is where the files live; no sub-folders
 
-# radius including compass tested to ensure it captures (nearly) every compass circle
+# ARE THERE COMPASSES ON THIS MAP? 0 for no, 1 for yes
+compass = 0
 
 # import the necessary packages
 import numpy as np
@@ -13,51 +12,60 @@ import glob
 import os,sys
 import cv2
 
+# function to change output path
 def change_to_output(path):
     return os.path.join(os.path.split(os.path.dirname(path))[0], 'output', os.path.basename(path))
 
 # parameters for circle bin radii, hough_circles, GaussianBlur, and circle drawn by cv2 are defined here
-# need to test params
+
+# params for circles_compass
+## Radii
+rmin_c = 25
+rmax_c = 40
+# min distance between circles
+min_dist_c = 15
+# params
+p1_c = 20
+p2_c = 75
+# blur
+b1_c = 3
+b2_c = 3
 
 # params for circles_small
 ## Radii
-rmin_s = 15
-rmax_s = 55
+rmin_s = 41
+rmax_s = 65
 # min distance between circles
 min_dist_s = 15
 # params
 p1_s = 20
-p2_s = 65
+p2_s = 60
 # blur
 b1_s = 7
 b2_s = 7
 
 # params for circles_large
 ## Radii
-rmin_l = 55
+rmin_l = 66
 rmax_l = 100
 # min distance between circles
 min_dist_l = 55
 # params
 p1_l = 20
-p2_l = 65
+p2_l = 60
 # blur
 b1_l = 7
 b2_l = 7
 
 # thickness for circle that is drawn for you to see
 draw_stroke = 8
+text_size = 0.5
+text_stroke = 1
 
-# construct the argument parser and parse the arguments
-#ap = argparse.ArgumentParser()
-#ap.add_argument("-i", "--image", required = True, help = "Path to the image")
-#args = vars(ap.parse_args())
-
-## Get all the png image in the PATH_TO_IMAGES. Input whatever folder you're actually using.
+## including /saveTo**/ also searches one level of sub-directories below "input" that start with saveTo
 imgnames = sorted(glob.glob("input/*.jpg"))
 
-# load the image, clone it for output, and then convert it to grayscale
-# load list of images, code from https://stackoverflow.com/questions/46505052/processing-multiple-images-in-sequence-in-opencv-python
+# load the images, clone for output
 for imgname in imgnames:
     image = cv2.imread(imgname)
     copy = image.copy()
@@ -89,20 +97,31 @@ for imgname in imgnames:
 ########## end of resize to fit params ########################################
 
 
+# add blur and convert to grayscale
+    blur_c = cv2.GaussianBlur(output,(b1_c,b2_c),0)
     blur_s = cv2.GaussianBlur(output,(b1_s,b2_s),0)
     blur_l = cv2.GaussianBlur(output,(b1_l,b2_l),0)
+
+    gray_c = cv2.cvtColor(blur_c, cv2.COLOR_BGR2GRAY)
     gray_s = cv2.cvtColor(blur_s, cv2.COLOR_BGR2GRAY)
     gray_l = cv2.cvtColor(blur_l, cv2.COLOR_BGR2GRAY)
 
 
-#   imgname2 = "_gray".join(os.path.splitext(imgname))  [[removed]]
-#   cv2.imwrite(imgname2, gray)  [[removed]]
-
 # detect circles in the image
-# 2nd number after HOUGH_GRADIENT = min distance between centers of HoughCircles
-# too wide a radius returns false positives; that's why it's split into multiple segments
-# compass is between 87 and 90px
 
+# Compass? iteration
+    circles_c = cv2.HoughCircles(gray_c,cv2.HOUGH_GRADIENT,1,min_dist_c,
+                                param1=p1_c,param2=p2_c,minRadius=rmin_c,maxRadius=rmax_c)
+    if circles_c is not None:
+        circles_c = np.round(circles_c[0, :]).astype("int")
+
+        for (x, y, r) in circles_c:
+            # draw the outer circle
+            cv2.circle(output,(x, y), r, (0, 255, 0), draw_stroke)
+            # draw the radius
+            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (255,0,0), text_stroke, cv2.LINE_AA)
+            # draw the center of the circle
+        #    cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
 # Small iteration
     circles = cv2.HoughCircles(gray_s,cv2.HOUGH_GRADIENT,1,min_dist_s,
@@ -114,37 +133,67 @@ for imgname in imgnames:
             # draw the outer circle
             cv2.circle(output,(x, y), r, (0, 255, 0), draw_stroke)
             # draw the radius
-            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
+            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (255,0,0), text_stroke, cv2.LINE_AA)
             # draw the center of the circle
-            cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
+        #    cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
 
 # Large iteration
-    circles1 = cv2.HoughCircles(gray_l,cv2.HOUGH_GRADIENT,1,min_dist_l,
+    circles_1 = cv2.HoughCircles(gray_l,cv2.HOUGH_GRADIENT,1,min_dist_l,
                                 param1=p1_l,param2=p2_l,minRadius=rmin_l,maxRadius=rmax_l)
-    if circles1 is not None:
-        circles1 = np.round(circles1[0, :]).astype("int")
+    if circles_1 is not None:
+        circles_1 = np.round(circles_1[0, :]).astype("int")
 
-        for (x, y, r) in circles1:
+        for (x, y, r) in circles_1:
             # draw the outer circle
             cv2.circle(output,(x, y), r, (0, 255, 0), draw_stroke)
             # draw the radius
-            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, 1, (255,0,0), 2, cv2.LINE_AA)
+            cv2.putText(output,str(r),(x,y), cv2.FONT_HERSHEY_SIMPLEX, text_size, (255,0,0), text_stroke, cv2.LINE_AA)
             # draw the center of the circle
-            cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
+        #    cv2.circle(output,(x, y), 2, (0, 0, 255), 3)
 
 
 # define bottom threshold for how many circles to find
+    if circles_c is not None:
+        no_of_circles_c = int(len(circles_c))
+    else: no_of_circles_c = int(0)
+
     if circles is not None:
         no_of_circles = int(len(circles))
     else: no_of_circles = int(0)
 
-    if circles1 is not None:
-        no_of_circles1 = int(len(circles1))
-    else: no_of_circles1 = int(0)
+    if circles_1 is not None:
+        no_of_circles_1 = int(len(circles_1))
+    else: no_of_circles_1 = int(0)
 
 # if there is a circle, print output
-    if (no_of_circles>0) or (no_of_circles1>0):
+    if (no_of_circles>0) or (no_of_circles_1>0) or (no_of_circles_c>compass):
         imgname1 = "_out".join(os.path.splitext(imgname))
         imgname1 = change_to_output(imgname1)
         cv2.imwrite(imgname1, output)
+    else:
+        imgname2 = imgname
+
+# add outputs and non-outputs to a dataframe of all results
+df1 = pd.DataFrame()
+df2 = pd.DataFrame()
+
+# positive outputs
+df1['files'] = pd.Series(imgname1).astype(str)
+# df1['files'] = df1['files'].map(lambda x: rstrip('_out.jpg'))
+df1['circ'] = 1
+
+# negative outputs
+df2['files'] = pd.Series(imgname2).astype(str)
+# df2['files'] = df2['files'].map(lambda x: rstrip('.jpg'))
+df2['circ'] = 0
+
+# combine pos and neg df and strip out unnecessary info
+df = df1.append(df2)
+df['files'] = df['files'].str.split('/').str[-1]
+df['files'] = df['files'].str.rstrip('_out.jpg')
+df['files'] = df['files'].str.rstrip('.jpg')
+
+# sort and output as csv
+df = df.sort_values(by=['files'])
+df.to_csv('output/output.csv', index=False)

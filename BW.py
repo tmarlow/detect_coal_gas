@@ -273,3 +273,29 @@ for imgname in imgnames:
         imgname1 = "_out".join(os.path.splitext(imgname))
         imgname1 = change_to_output(imgname1)
         cv2.imwrite(imgname1, output)
+else:
+    imgname2 = imgname
+
+# add outputs and non-outputs to a dataframe of all results
+df1 = pd.DataFrame()
+df2 = pd.DataFrame()
+
+# positive outputs
+df1['files'] = pd.Series(imgname1).astype(str)
+# df1['files'] = df1['files'].map(lambda x: rstrip('_out.jpg'))
+df1['circ'] = 1
+
+# negative outputs
+df2['files'] = pd.Series(imgname2).astype(str)
+# df2['files'] = df2['files'].map(lambda x: rstrip('.jpg'))
+df2['circ'] = 0
+
+# combine pos and neg df and strip out unnecessary info [REWORK TO MATCH BW FILENAMES]
+df = df1.append(df2)
+# df['files'] = df['files'].str.split('/').str[-1]
+# df['files'] = df['files'].str.rstrip('_out.jpg')
+# df['files'] = df['files'].str.rstrip('.jpg')
+
+# sort and output as csv
+df = df.sort_values(by=['files'])
+df.to_csv('output/output.csv', index=False)
